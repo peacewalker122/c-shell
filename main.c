@@ -1,3 +1,6 @@
+#include "command.h"
+#include "lex.h"
+#include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +30,6 @@ void parse_argv(struct simple_command *command, char *arg) {
   command->numberOfArguments = 0;
 
   while (token != NULL) {
-    printf("Token[temp_token]: %s\n", token);
     temp_token[command->numberOfArguments] = token;
 
     if (command->numberOfArguments != 0) {
@@ -40,13 +42,10 @@ void parse_argv(struct simple_command *command, char *arg) {
   }
 
   for (int i = 0; i < command->numberOfArguments; i++) {
-    printf("Token[assignee]: %s\n", temp_token[i]);
     command->arguments[i] = (char **)malloc(sizeof(char *) * MAX_ARGUMENTS);
-
     char *arg_token = strtok(temp_token[i], " ");
 
     while (arg_token != NULL) {
-      printf("Token[arg_token]: %s\n", arg_token);
       command->arguments[i][counter] = arg_token;
       counter++;
       arg_token = strtok(NULL, " ");
@@ -115,25 +114,25 @@ int launch(char **args) {
 int main(int argc, char *argv[]) {
   if (isatty(STDIN_FILENO)) {
     while (1) {
-      printf("> ");
+      printf("danielangrh@pl> ");
 
       struct simple_command *command =
           (struct simple_command *)malloc(sizeof(struct simple_command));
 
       char *user_input = get_line();
+      lexer *input_lexer = new_lexer(user_input);
+      parser *input_parser = new_parser(input_lexer);
 
-      printf("User input: %s\n", user_input);
-
+      master_command *input_command = new_commands(input_parser);
       parse_argv(command, user_input);
 
-      printf("Number of arguments: %d\n", command->numberOfArguments);
-
       for (int i = 0; i < command->numberOfArguments; i++) {
-        printf("Argument %d: %s\n", i, command->arguments[i][0]);
         launch(command->arguments[i]);
       }
 
       free(command->arguments);
+      free(input_lexer);
+      free(input_parser);
       free(user_input);
     };
   } else {
